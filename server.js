@@ -16,7 +16,7 @@ connectDB();
 app.use(express.json());
 app.use(
   cors({
-    origin: "https://task-manager-imtv.onrender.com/",
+    origin: "https://task-manager-imtv.onrender.com",
     credentials: true,
   })
 );
