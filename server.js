@@ -1,8 +1,10 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import tasksRoutes from "./routes/tasks.routes.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
 dotenv.config();
@@ -11,8 +13,15 @@ const PORT = process.env.PORT || 3000;
 //  connect to database
 connectDB();
 
-// Middleware to parse JSON bodies
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://127.0.0.1:5500", // ✅ exact origin of your frontend
+    credentials: true,
+  })
+);
+app.use;
+cookieParser();
 
 app.get("/", (req, res) => {
   res.send("Welcome to the Task Manager API");

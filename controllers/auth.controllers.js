@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { connectDB } from "../lib/db.js";
+import jwt from "jsonwebtoken";
 
 export const signup = async (req, res) => {
   const { email, password, name } = req.body;
@@ -60,7 +61,43 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    res.status(200).json({ message: "Login successful", userId: user.id });
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    // Set the token in a cookie
+    res.cookie("token", token, {
+      httpOnly: false, // true in production
+      secure: false,
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    res.cookie("role", user.role, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.cookie("userId", user.id, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      userId: user.id,
+      name: user.name,
+      role: user.role,
+    });
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -144,4 +181,26 @@ export const getUserbyId = async (req, res) => {
     console.error("Error fetching user by ID:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+};
+
+export const logout = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: false,
+    sameSite: "Lax",
+    secure: false,
+  });
+
+  res.clearCookie("role", {
+    httpOnly: false,
+    sameSite: "Lax",
+    secure: false,
+  });
+
+  res.clearCookie("userId", {
+    httpOnly: false,
+    sameSite: "Lax",
+    secure: false,
+  });
+
+  return res.status(200).json({ message: "Logged out successfully" });
 };

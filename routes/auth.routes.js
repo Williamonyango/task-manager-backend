@@ -7,15 +7,16 @@ import {
   getUsers,
   updateRole,
   getUserbyId,
+  logout,
 } from "../controllers/auth.controllers.js";
 const router = express.Router();
 
 router.post("/signup", signup);
 router.post("/login", login);
-router.post("/delete/:userId", deleteUser);
+router.delete("/user/:userId", deleteUser);
 router.get("/users", getUsers);
 router.get("/user/:userId", getUserbyId);
-router.post("/user/role/:userId", updateRole);
-// router.get("/logout", logout);
+router.put("/user/role/:userId", updateRole);
+router.post("/logout", logout);
 
 export default router;

@@ -1,4 +1,7 @@
 import { connectDB } from "../lib/db.js";
+import { transporter } from "../lib/emailService.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 export const createTask = async (req, res) => {
   const { title, description, deadline, status, assigned_to } = req.body;
@@ -24,6 +27,31 @@ export const createTask = async (req, res) => {
       ]
     );
 
+    // fetch the user's email and name for notification
+    const [userRows] = await db.execute(
+      `SELECT email, name FROM users WHERE id = ?`,
+      [assigned_to]
+    );
+    const user = userRows[0];
+    if (!user) {
+      return res.status(404).json({ error: "Assigned user not found" });
+    }
+
+    // Send email notification to the user
+    await transporter.sendMail({
+      from: `"Task Manager" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "New Task Assigned",
+      html: `<p>Hi ${user.name},</p>
+          <p>You have been assigned a new task:</p>
+          <ul>
+            <li><strong>Title:</strong> ${title}</li>
+            <li><strong>Description:</strong> ${description}</li>
+            <li><strong>Deadline:</strong> ${deadline || "Not specified"}</li>
+          </ul>
+          <p>Please login to your dashboard to manage it.</p>
+          `,
+    });
     res.status(201).json({
       message: "Task created successfully",
       taskId: result.insertId,
@@ -53,7 +81,7 @@ export const getAllTasksWithUsers = async (req, res) => {
         ORDER BY tasks.created_at DESC
       `);
 
-    res.status(200).json({ tasks: rows });
+    res.status(200).json(rows);
   } catch (error) {
     console.error("Error fetching tasks with users:", error);
     res.status(500).json({ error: "Internal server error" });
